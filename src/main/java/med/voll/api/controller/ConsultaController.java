@@ -3,10 +3,11 @@ package med.voll.api.controller;
 
 import jakarta.validation.Valid;
 import med.voll.api.domain.consulta.AgendaDeConsultaService;
+import med.voll.api.domain.consulta.ConsultaRepository;
 import med.voll.api.domain.consulta.dto.DatosAgendarConsulta;
 import med.voll.api.domain.consulta.dto.DatosCancelamientoConsulta;
 import med.voll.api.domain.consulta.dto.DatosDetalleConsulta;
-import med.voll.api.domain.consulta.dto.DatosRelatoriosConsultaMensual;
+import med.voll.api.domain.consulta.dto.DatosReporteConsultaMensual;
 import med.voll.api.infra.errores.ValidacionDeIntegridad;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
 
@@ -29,6 +31,9 @@ public class ConsultaController {
 
     @Autowired
     private AgendaDeConsultaService service;
+
+    private ConsultaRepository consultaRepository; // ✅ FALTABA ESTO
+
 
     @GetMapping
     public ResponseEntity<Page<DatosDetalleConsulta>> listar(@PageableDefault(size = 10, sort = {"fecha"}) Pageable paginacion) {
@@ -51,9 +56,12 @@ public class ConsultaController {
     }
 
     @GetMapping("/relatorio-mensual/{mes}")
-    public ResponseEntity<List<DatosRelatoriosConsultaMensual>> generarRelatorioConsultaMensual(@PathVariable YearMonth mes) {
-        //var relatorio = consultaRepository.?
-        return ResponseEntity.ok(null);
+    public ResponseEntity<List<DatosReporteConsultaMensual>> generarRelatorioConsultaMensual(@PathVariable YearMonth mes) {
+        LocalDateTime inicio = mes.atDay(1).atStartOfDay();
+        LocalDateTime fin = mes.atEndOfMonth().atTime(23, 59, 59);
+
+        var relatorio = consultaRepository.relatorioMensual(inicio, fin);
+        return ResponseEntity.ok(relatorio);
     }
 
 }
